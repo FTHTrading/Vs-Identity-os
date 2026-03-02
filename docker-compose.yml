@@ -1,0 +1,59 @@
+services:
+  # ─────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-icos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-identity_capsule}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-icos} -d ${POSTGRES_DB:-identity_capsule}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - icos_network
+
+  # ─────────────────────────────────────
+  # Identity Capsule OS Application
+  # ─────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-icos}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-identity_capsule}?schema=public
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set}
+      ECDSA_PRIVATE_KEY_B64: ${ECDSA_PRIVATE_KEY_B64:?ECDSA_PRIVATE_KEY_B64 must be set}
+      ECDSA_PUBLIC_KEY_B64: ${ECDSA_PUBLIC_KEY_B64:?ECDSA_PUBLIC_KEY_B64 must be set}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    networks:
+      - icos_network
+    labels:
+      com.identitycapsule.service: "app"
+      com.identitycapsule.version: "1.0.0"
+
+volumes:
+  postgres_data:
+
+networks:
+  icos_network:
+    driver: bridge

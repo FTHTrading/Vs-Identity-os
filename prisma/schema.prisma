@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// TENANT (multi-org isolation)
+// ─────────────────────────────────────────────
+model Tenant {
+  id          String    @id @default(cuid())
+  name        String
+  domain      String?   @unique
+  logoUrl     String?
+  primaryColor String   @default("#1e293b")
+  accentColor  String   @default("#3b82f6")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  users       User[]
+  profiles    Profile[]
+  activityLogs ActivityLog[]
+
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────
+// USER (authentication)
+// ─────────────────────────────────────────────
+model User {
+  id           String    @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  name         String
+  role         Role      @default(VIEWER)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  profiles     Profile[] @relation("CreatedBy")
+  activityLogs ActivityLog[]
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// PROFILE (identity capsule)
+// ─────────────────────────────────────────────
+model Profile {
+  id              String    @id @default(cuid())
+  tenantId        String
+  slug            String
+  fullName        String
+  title           String?
+  organization    String?
+  phone           String?
+  email           String?
+  website         String?
+  linkedIn        String?
+  twitter         String?
+  github          String?
+  avatarUrl       String?
+  bio             String?
+  department      String?
+  location        String?
+  internalNotes   String?   // admin-only
+  roleTags        String[]  @default([])
+  isPublic        Boolean   @default(true)
+  isActive        Boolean   @default(true)
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy       User      @relation("CreatedBy", fields: [createdById], references: [id])
+  signatures      ProfileSignature[]
+  nfcPayloads     NfcPayload[]
+
+  @@unique([tenantId, slug])
+  @@map("profiles")
+}
+
+// ─────────────────────────────────────────────
+// PROFILE SIGNATURE (crypto layer)
+// ─────────────────────────────────────────────
+model ProfileSignature {
+  id          String    @id @default(cuid())
+  profileId   String
+  hash        String    // SHA-256 of canonical JSON
+  signature   String    // ECDSA signature
+  algorithm   String    @default("SHA256withECDSA")
+  profileSnapshot Json  // immutable snapshot at time of signing
+  createdAt   DateTime  @default(now())
+
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("profile_signatures")
+}
+
+// ─────────────────────────────────────────────
+// NFC PAYLOAD
+// ─────────────────────────────────────────────
+model NfcPayload {
+  id          String      @id @default(cuid())
+  profileId   String
+  mode        NfcMode     @default(URL)
+  payload     String      // the actual NFC data string
+  label       String?
+  createdAt   DateTime    @default(now())
+
+  profile     Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("nfc_payloads")
+}
+
+// ─────────────────────────────────────────────
+// ACTIVITY LOG (immutable audit trail)
+// ─────────────────────────────────────────────
+model ActivityLog {
+  id          String    @id @default(cuid())
+  tenantId    String
+  userId      String?
+  action      String    // CREATE_PROFILE, UPDATE_PROFILE, DELETE_PROFILE, LOGIN, etc.
+  entityType  String?   // "Profile", "User", "Tenant"
+  entityId    String?
+  beforeData  Json?     // snapshot before change
+  afterData   Json?     // snapshot after change
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+enum Role {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum NfcMode {
+  URL
+  VCARD
+  SIGNED_JSON
+}
