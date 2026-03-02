@@ -31,13 +31,14 @@
 | 5 | [🟥 Auth & RBAC Flow](#-auth--rbac-flow) | JWT Lifecycle & Permissions |
 | 6 | [🟪 Cryptographic Signing](#-cryptographic-signing) | ECDSA Sign & Verify |
 | 7 | [🩵 NFC Payload System](#-nfc-payload-system) | Three NFC Modes |
-| 8 | [🟢 Quick Start](#-quick-start) | Setup in 5 Steps |
-| 9 | [⚙️ Environment Variables](#️-environment-variables) | Config Reference |
-| 10 | [📡 API Reference](#-api-reference) | All Endpoints |
-| 11 | [🚀 Deployment](#-deployment) | Docker & Netlify |
-| 12 | [🔒 Security Posture](#-security-posture) | Defense-in-Depth |
-| 13 | [📁 Project Structure](#-project-structure) | Annotated File Tree |
-| 14 | [🗺️ Roadmap](#️-roadmap) | Planned Features |
+| 8 | [🟢 Quick Start](#-quick-start) | Setup in 3 Commands |
+| 9 | [🤖 Automation](#-automation) | Scripts, CI/CD & Netlify Auto-Deploy |
+| 10 | [⚙️ Environment Variables](#️-environment-variables) | Config Reference |
+| 11 | [📡 API Reference](#-api-reference) | All Endpoints |
+| 12 | [🚀 Deployment](#-deployment) | Docker & Netlify |
+| 13 | [🔒 Security Posture](#-security-posture) | Defense-in-Depth |
+| 14 | [📁 Project Structure](#-project-structure) | Annotated File Tree |
+| 15 | [🗺️ Roadmap](#️-roadmap) | Planned Features |
 
 ---
 
@@ -416,43 +417,110 @@ flowchart TD
 | Node.js | ≥ 20.x | `node --version` |
 | pnpm | ≥ 9.x | `pnpm --version` |
 | PostgreSQL | ≥ 15 | `psql --version` |
-| OpenSSL | any | `openssl version` |
 
-### Setup
+> **No OpenSSL required** — `pnpm setup` generates ECDSA keys using Node.js built-in `crypto`.
 
-**1. Clone & install**
+### Setup in 3 commands
+
 ```bash
+# 1. Clone & install
 git clone https://github.com/FTHTrading/Vs-Identity-os.git
 cd Vs-Identity-os
 pnpm install
-```
 
-**2. Generate ECDSA keys**
-```bash
-openssl ecparam -name prime256v1 -genkey -noout -out ec_private.pem
-openssl ec -in ec_private.pem -pubout -out ec_public.pem
-```
+# 2. Auto-generate .env with ECDSA keys + JWT secret
+pnpm setup
+# → Edit .env and fill in DATABASE_URL, then:
 
-**3. Configure environment**
-```bash
-cp .env.example .env
-# Edit .env — fill in DATABASE_URL, JWT_SECRET, and ECDSA key values
-```
-
-**4. Database setup**
-```bash
-pnpm db:migrate   # Run Prisma migrations
-pnpm db:seed      # Seed admin user + demo tenant
-```
-
-**5. Start development server**
-```bash
-pnpm dev          # Starts at http://localhost:3000
+# 3. Migrate DB, seed, and start
+pnpm db:migrate && pnpm db:seed && pnpm dev
 ```
 
 > **Default admin credentials (after seed):**
 > - Email: `admin@example.com`
 > - Password: `admin123!`
+
+---
+
+## 🤖 Automation
+
+### Local Setup Script
+
+`pnpm setup` runs `scripts/setup.js` which:
+
+| Step | What happens |
+|------|--------------|
+| 1 | Copies `.env.example` → `.env` (if `.env` doesn't exist) |
+| 2 | Generates a secure 64-char hex `JWT_SECRET` |
+| 3 | Generates an ECDSA P-256 key pair using Node.js `crypto` (no openssl) |
+| 4 | Base64-encodes both PEM keys and writes them into `.env` |
+| 5 | Prints a summary of what still needs manual input (`DATABASE_URL`) |
+
+```bash
+pnpm setup
+# Output:
+# ✅  Created .env from .env.example
+# ✅  JWT_SECRET           generated (64-char hex)
+# ✅  ECDSA_PRIVATE_KEY_B64 generated (P-256 sec1 PEM → base64)
+# ✅  ECDSA_PUBLIC_KEY_B64  generated (P-256 spki PEM → base64)
+# ⚠️   Still required: DATABASE_URL
+```
+
+### Netlify One-Command Deploy
+
+`pnpm setup:netlify` runs `scripts/netlify-setup.js` which:
+
+| Step | What happens |
+|------|--------------|
+| 1 | Verifies Netlify CLI auth (`npx netlify-cli login` if needed) |
+| 2 | Creates or links the Netlify site `vs-identity-os` |
+| 3 | Pushes **all `.env` variables** to Netlify's environment |
+| 4 | Runs `netlify deploy --build --prod` (full production deploy) |
+| 5 | Prints live URL + GitHub Secrets checklist |
+
+```bash
+# One-time: authenticate with Netlify
+npx netlify-cli login
+
+# Deploy everything
+pnpm setup:netlify
+```
+
+### GitHub Actions CI/CD
+
+Two workflows in `.github/workflows/`:
+
+```mermaid
+flowchart LR
+    PR[Pull Request] --> CI[ci.yml\nLint + Typecheck + Build]
+    PUSH[Push to main] --> DEPLOY[deploy.yml\nBuild + Netlify Deploy]
+
+    CI --> LINT[pnpm lint]
+    LINT --> TC[pnpm type-check]
+    TC --> BUILD1[pnpm build]
+    BUILD1 --> ARTIFACT[Upload artifact]
+
+    DEPLOY --> BUILD2[pnpm build]
+    BUILD2 --> NETLIFY_PROD[netlify deploy --prod]
+    NETLIFY_PROD --> LIVE[Live site]
+
+    PR --> DEPLOY
+    DEPLOY --> NETLIFY_PREVIEW[netlify deploy --preview]
+    NETLIFY_PREVIEW --> COMMENT[PR comment\nwith preview URL]
+```
+
+#### Required GitHub Secrets
+
+Go to **Settings → Secrets and variables → Actions → New repository secret**:
+
+| Secret | Where to get it |
+|--------|----------------|
+| `NETLIFY_AUTH_TOKEN` | Netlify → User Settings → Applications → Personal access tokens |
+| `NETLIFY_SITE_ID` | Printed by `pnpm setup:netlify`, or Netlify → Site → Site configuration |
+| `DATABASE_URL` | Your production PostgreSQL connection string |
+| `JWT_SECRET` | Already in your `.env` after `pnpm setup` |
+| `ECDSA_PRIVATE_KEY_B64` | Already in your `.env` after `pnpm setup` |
+| `ECDSA_PUBLIC_KEY_B64` | Already in your `.env` after `pnpm setup` |
 
 ---
 
@@ -733,11 +801,18 @@ identity-capsule-os/
 ## 🛠️ Dev Scripts
 
 ```bash
+# ── First-time setup ──────────────────────────────────────────────
+pnpm setup            # Generate .env with ECDSA keys + JWT secret (no openssl needed)
+pnpm setup:netlify    # Create Netlify site, push env vars, deploy to production
+
+# ── Development ───────────────────────────────────────────────────
 pnpm dev              # Start development server (hot reload)
 pnpm build            # Production build (Next.js)
 pnpm start            # Start production server
 pnpm lint             # ESLint check
 pnpm type-check       # TypeScript strict check (tsc --noEmit)
+
+# ── Database ──────────────────────────────────────────────────────
 pnpm db:migrate       # Run Prisma migrations (dev)
 pnpm db:seed          # Seed database with demo data
 pnpm db:studio        # Open Prisma Studio (GUI DB viewer)

@@ -13,7 +13,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "setup": "node scripts/setup.js",
+    "setup:netlify": "node scripts/netlify-setup.js"
   },
   "dependencies": {
     "@prisma/client": "^5.10.2",

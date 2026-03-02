@@ -39,6 +39,14 @@ Thumbs.db
 .idea/
 *.iml
 
+# Netlify
+.netlify/
+
+# ECDSA key files (generated locally — never commit)
+*.pem
+ec_private*
+ec_public*
+
 # Vercel / deployment
 .vercel
 
