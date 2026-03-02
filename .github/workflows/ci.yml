@@ -45,9 +45,10 @@ jobs:
     env:
       # Stub values so Next.js build doesn't error on missing env
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      JWT_SECRET: ci-secret-placeholder-32-chars-min
-      ECDSA_PRIVATE_KEY_B64: ${{ secrets.ECDSA_PRIVATE_KEY_B64 }}
-      ECDSA_PUBLIC_KEY_B64: ${{ secrets.ECDSA_PUBLIC_KEY_B64 }}
+      JWT_SECRET: ci-secret-placeholder-min-32-chars-xxxxxxxx
+      JWT_REFRESH_SECRET: ci-refresh-secret-placeholder-32-chars-xx
+      SIGNING_PRIVATE_KEY_BASE64: ${{ secrets.SIGNING_PRIVATE_KEY_BASE64 }}
+      SIGNING_PUBLIC_KEY_BASE64: ${{ secrets.SIGNING_PUBLIC_KEY_BASE64 }}
       NEXT_PUBLIC_APP_URL: https://vs-identity-os.netlify.app
     steps:
       - uses: actions/checkout@v4

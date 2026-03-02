@@ -34,13 +34,14 @@ if (!fs.existsSync(ENV_OUT)) {
 }
 
 // ── 2. Generate JWT_SECRET ─────────────────────────────────────────────────
-const jwtSecret = randomBytes(32).toString('hex'); // 64 hex chars
+const jwtSecret        = randomBytes(32).toString('hex'); // 64 hex chars
+const jwtRefreshSecret = randomBytes(32).toString('hex'); // separate refresh secret
 
 // ── 3. Generate ECDSA P-256 key pair ──────────────────────────────────────
 const { privateKey, publicKey } = generateKeyPairSync('ec', {
   namedCurve: 'prime256v1',
-  privateKeyEncoding: { type: 'sec1',    format: 'pem' },
-  publicKeyEncoding:  { type: 'spki',    format: 'pem' },
+  privateKeyEncoding: { type: 'sec1', format: 'pem' },
+  publicKeyEncoding:  { type: 'spki', format: 'pem' },
 });
 
 const privateB64 = Buffer.from(privateKey).toString('base64');
@@ -58,9 +59,10 @@ function setEnvVar(content, key, value) {
   return content.trimEnd() + `\n${key}=${value}\n`;
 }
 
-env = setEnvVar(env, 'JWT_SECRET',             jwtSecret);
-env = setEnvVar(env, 'ECDSA_PRIVATE_KEY_B64',  privateB64);
-env = setEnvVar(env, 'ECDSA_PUBLIC_KEY_B64',   publicB64);
+env = setEnvVar(env, 'JWT_SECRET',                  jwtSecret);
+env = setEnvVar(env, 'JWT_REFRESH_SECRET',           jwtRefreshSecret);
+env = setEnvVar(env, 'SIGNING_PRIVATE_KEY_BASE64',   privateB64);
+env = setEnvVar(env, 'SIGNING_PUBLIC_KEY_BASE64',    publicB64);
 
 fs.writeFileSync(ENV_OUT, env, 'utf8');
 
@@ -70,9 +72,10 @@ console.log('══════════════════════�
 console.log('  Identity Capsule OS — Setup Complete');
 console.log('═══════════════════════════════════════════════════════════');
 console.log('');
-console.log('✅  JWT_SECRET           generated (64-char hex)');
-console.log('✅  ECDSA_PRIVATE_KEY_B64 generated (P-256 sec1 PEM → base64)');
-console.log('✅  ECDSA_PUBLIC_KEY_B64  generated (P-256 spki PEM → base64)');
+console.log('✅  JWT_SECRET                 generated (64-char hex)');
+console.log('✅  JWT_REFRESH_SECRET         generated (64-char hex)');
+console.log('✅  SIGNING_PRIVATE_KEY_BASE64 generated (P-256 sec1 PEM → base64)');
+console.log('✅  SIGNING_PUBLIC_KEY_BASE64  generated (P-256 spki PEM → base64)');
 console.log('');
 console.log('⚠️   Still required — fill in .env manually:');
 console.log('');

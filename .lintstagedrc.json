@@ -1,0 +1,8 @@
+{
+  "*.{ts,tsx}": [
+    "pnpm exec eslint --fix --max-warnings=0"
+  ],
+  "*.{js,mjs,cjs}": [
+    "pnpm exec eslint --fix"
+  ]
+}

@@ -1,17 +1,27 @@
 [build]
-  command = "pnpm build"
+  command = "pnpm db:generate && pnpm build"
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20"
-  PNPM_VERSION = "9"
+  NODE_VERSION  = "20"
+  PNPM_VERSION  = "9"
+  # Prisma needs this to skip native binary prompts during build
+  PRISMA_CLI_BINARY_TARGETS = "rhel-openssl-3.0.x"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Run DB migrations automatically after each successful deploy
+[functions]
+  node_bundler = "esbuild"
+
+[[edge_functions]]
+  path = "/api/*"
+  function = "edge-middleware"
+
 [dev]
-  command = "pnpm dev"
-  port = 3000
-  targetPort = 3000
-  framework = "#custom"
-  autoLaunch = false
+  command     = "pnpm dev"
+  port        = 3000
+  targetPort  = 3000
+  framework   = "#custom"
+  autoLaunch  = false

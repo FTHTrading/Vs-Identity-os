@@ -88,7 +88,7 @@ if (!fs.existsSync(ENV_FILE)) {
 const envVars = parseEnvFile(ENV_FILE);
 console.log(`✅  .env found — ${Object.keys(envVars).length} variables loaded`);
 
-const missing = ['DATABASE_URL', 'JWT_SECRET', 'ECDSA_PRIVATE_KEY_B64', 'ECDSA_PUBLIC_KEY_B64']
+const missing = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'SIGNING_PRIVATE_KEY_BASE64', 'SIGNING_PUBLIC_KEY_BASE64']
   .filter(k => !envVars[k]);
 if (missing.length) {
   console.error(`❌  Missing required .env vars: ${missing.join(', ')}`);
@@ -207,10 +207,11 @@ console.log(`  Netlify ID:  ${siteId}`);
 console.log('');
 console.log('  GitHub Secrets needed for CI/CD (Settings → Secrets → Actions):');
 console.log('');
-console.log('    NETLIFY_AUTH_TOKEN   npx netlify-cli token:list (or user settings)');
-console.log(`    NETLIFY_SITE_ID      ${siteId}`);
-console.log('    DATABASE_URL         (your production DB connection string)');
-console.log('    JWT_SECRET           (already in .env)');
-console.log('    ECDSA_PRIVATE_KEY_B64 (already in .env)');
-console.log('    ECDSA_PUBLIC_KEY_B64  (already in .env)');
+  console.log('    NETLIFY_AUTH_TOKEN         Netlify → User Settings → Personal access tokens');
+  console.log(`    NETLIFY_SITE_ID            ${siteId || '<printed above>'}`);
+  console.log('    DATABASE_URL               (your production PostgreSQL connection string)');
+  console.log('    JWT_SECRET                 (already in .env after pnpm setup)');
+  console.log('    JWT_REFRESH_SECRET         (already in .env after pnpm setup)');
+  console.log('    SIGNING_PRIVATE_KEY_BASE64 (already in .env after pnpm setup)');
+  console.log('    SIGNING_PUBLIC_KEY_BASE64  (already in .env after pnpm setup)');
 console.log('');

@@ -41,8 +41,9 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ECDSA_PRIVATE_KEY_B64: ${{ secrets.ECDSA_PRIVATE_KEY_B64 }}
-          ECDSA_PUBLIC_KEY_B64: ${{ secrets.ECDSA_PUBLIC_KEY_B64 }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          SIGNING_PRIVATE_KEY_BASE64: ${{ secrets.SIGNING_PRIVATE_KEY_BASE64 }}
+          SIGNING_PUBLIC_KEY_BASE64: ${{ secrets.SIGNING_PUBLIC_KEY_BASE64 }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://vs-identity-os.netlify.app' }}
 
       - name: Deploy to Netlify (production)

@@ -182,6 +182,7 @@ sequenceDiagram
 | `/api/admin/users` | GET/PATCH | ✅ | Admin | User management |
 | `/api/admin/stats` | GET | ✅ | Admin | Platform statistics |
 | `/api/admin/activity-log` | GET | ✅ | Admin | Audit log |
+| `/api/health` | GET | ❌ | — | Health check (DB + env status, 200/207/503) |
 
 ---
 
@@ -370,8 +371,8 @@ openssl ec -in ec_private.pem -pubout -out ec_public.pem
 
 # Base64-encode for environment variables
 # Linux/macOS:
-base64 -w 0 ec_private.pem   # → ECDSA_PRIVATE_KEY_B64
-base64 -w 0 ec_public.pem    # → ECDSA_PUBLIC_KEY_B64
+base64 -w 0 ec_private.pem   # → SIGNING_PRIVATE_KEY_BASE64
+base64 -w 0 ec_public.pem    # → SIGNING_PUBLIC_KEY_BASE64
 
 # Windows PowerShell:
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("ec_private.pem"))
@@ -460,9 +461,10 @@ pnpm db:migrate && pnpm db:seed && pnpm dev
 pnpm setup
 # Output:
 # ✅  Created .env from .env.example
-# ✅  JWT_SECRET           generated (64-char hex)
-# ✅  ECDSA_PRIVATE_KEY_B64 generated (P-256 sec1 PEM → base64)
-# ✅  ECDSA_PUBLIC_KEY_B64  generated (P-256 spki PEM → base64)
+# ✅  JWT_SECRET                    generated (64-char hex)
+# ✅  JWT_REFRESH_SECRET           generated (64-char hex)
+# ✅  SIGNING_PRIVATE_KEY_BASE64  generated (P-256 sec1 PEM → base64)
+# ✅  SIGNING_PUBLIC_KEY_BASE64   generated (P-256 spki PEM → base64)
 # ⚠️   Still required: DATABASE_URL
 ```
 
@@ -519,8 +521,9 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 | `NETLIFY_SITE_ID` | Printed by `pnpm setup:netlify`, or Netlify → Site → Site configuration |
 | `DATABASE_URL` | Your production PostgreSQL connection string |
 | `JWT_SECRET` | Already in your `.env` after `pnpm setup` |
-| `ECDSA_PRIVATE_KEY_B64` | Already in your `.env` after `pnpm setup` |
-| `ECDSA_PUBLIC_KEY_B64` | Already in your `.env` after `pnpm setup` |
+| `JWT_REFRESH_SECRET` | Already in your `.env` after `pnpm setup` |
+| `SIGNING_PRIVATE_KEY_BASE64` | Already in your `.env` after `pnpm setup` |
+| `SIGNING_PUBLIC_KEY_BASE64` | Already in your `.env` after `pnpm setup` |
 
 ---
 
@@ -532,8 +535,9 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 |----------|---------|-------------|
 | `DATABASE_URL` | `postgresql://user:pass@localhost:5432/identity_capsule_os` | PostgreSQL connection string |
 | `JWT_SECRET` | `super-secret-32-char-minimum` | HMAC secret for JWT signing (min 32 chars) |
-| `ECDSA_PRIVATE_KEY_B64` | `LS0tLS1CRUdJTi...` | Base64-encoded PEM private key |
-| `ECDSA_PUBLIC_KEY_B64` | `LS0tLS1CRUdJTi...` | Base64-encoded PEM public key |
+| `JWT_REFRESH_SECRET` | `another-secret-32-char-min` | HMAC secret for refresh JWT tokens |
+| `SIGNING_PRIVATE_KEY_BASE64` | `LS0tLS1CRUdJTi...` | Base64-encoded ECDSA P-256 PEM private key |
+| `SIGNING_PUBLIC_KEY_BASE64` | `LS0tLS1CRUdJTi...` | Base64-encoded ECDSA P-256 PEM public key |
 
 ### Optional
 
@@ -652,8 +656,9 @@ netlify deploy --prod
 
 - `DATABASE_URL` — your production PostgreSQL connection string
 - `JWT_SECRET`
-- `ECDSA_PRIVATE_KEY_B64`
-- `ECDSA_PUBLIC_KEY_B64`
+- `JWT_REFRESH_SECRET`
+- `SIGNING_PRIVATE_KEY_BASE64`
+- `SIGNING_PUBLIC_KEY_BASE64`
 
 ### CI/CD Pipeline
 
