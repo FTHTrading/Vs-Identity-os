@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Identity Capsule OS</title>
+  <meta name="description" content="Multi-tenant cryptographic identity platform. ECDSA-signed identity packets, NFC sharing, RBAC, and JWT edge middleware — built on Next.js 14 and PostgreSQL." />
+  <meta property="og:title"       content="Identity Capsule OS" />
+  <meta property="og:description" content="Multi-tenant cryptographic identity platform." />
+  <meta property="og:image"       content="https://opengraph.githubassets.com/1/FTHTrading/Vs-Identity-os" />
+  <meta property="og:url"         content="https://fthtrading.github.io/Vs-Identity-os/" />
+  <meta name="twitter:card"       content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪪</text></svg>" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0a0a0f;
+      --surface: #111118;
+      --border:  #1e1e2e;
+      --accent:  #7c6af7;
+      --accent2: #06b6d4;
+      --green:   #22c55e;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --card-bg: #13131c;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ──────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 60px;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { font-weight: 700; font-size: 1rem; letter-spacing: -.02em; }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: .875rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn {
+      padding: .4rem .9rem; border-radius: 6px; font-size: .875rem; font-weight: 600;
+      background: var(--accent); color: #fff; text-decoration: none;
+      transition: opacity .2s;
+    }
+    .nav-btn:hover { opacity: .85; }
+
+    /* ── HERO ─────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 7rem 1.5rem 5rem;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,106,247,.18) 0%, transparent 70%);
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .3rem .9rem; border: 1px solid var(--border);
+      border-radius: 999px; font-size: .75rem; color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 800; letter-spacing: -.04em;
+      line-height: 1.1; margin-bottom: 1.25rem;
+    }
+    h1 .grad {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      max-width: 560px; margin: 0 auto 2.5rem;
+      font-size: 1.1rem; color: var(--muted); line-height: 1.7;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      padding: .75rem 1.75rem; border-radius: 8px; font-weight: 700; font-size: 1rem;
+      background: var(--accent); color: #fff; text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 0 0 0 rgba(124,106,247,0);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(124,106,247,.35);
+    }
+    .btn-secondary {
+      padding: .75rem 1.75rem; border-radius: 8px; font-weight: 600; font-size: 1rem;
+      border: 1px solid var(--border); color: var(--text); text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--surface); }
+
+    /* ── STATS BAR ────────────────────────────── */
+    .stats {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 2.5rem;
+      padding: 2.5rem 1.5rem;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.75rem; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: .8rem; color: var(--muted); margin-top: .15rem; }
+
+    /* ── FEATURES GRID ────────────────────────── */
+    section { max-width: 1100px; margin: 0 auto; padding: 5rem 1.5rem; }
+    h2 { font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; margin-bottom: .5rem; }
+    .section-sub { color: var(--muted); margin-bottom: 3rem; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.5rem;
+      transition: border-color .2s, transform .15s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card-icon { font-size: 1.75rem; margin-bottom: .75rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+    .card p { font-size: .875rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── STACK ────────────────────────────────── */
+    .stack-grid { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .tag {
+      padding: .35rem .85rem; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: .8rem; color: var(--muted);
+    }
+    .tag.accent  { border-color: rgba(124,106,247,.4); color: #a78bfa; }
+    .tag.cyan    { border-color: rgba(6,182,212,.4);   color: #22d3ee; }
+    .tag.green   { border-color: rgba(34,197,94,.4);   color: #4ade80; }
+    .tag.orange  { border-color: rgba(251,146,60,.4);  color: #fb923c; }
+
+    /* ── API ROUTES ───────────────────────────── */
+    .route-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .route-table th {
+      text-align: left; padding: .75rem 1rem;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .route-table td { padding: .65rem 1rem; border-bottom: 1px solid var(--border); }
+    .route-table tr:last-child td { border-bottom: none; }
+    .route-table tr:hover td { background: var(--surface); }
+    .method { font-family: monospace; font-weight: 700; font-size: .8rem; }
+    .method.get    { color: #4ade80; }
+    .method.post   { color: #60a5fa; }
+    .method.patch  { color: #f59e0b; }
+    .method.delete { color: #f87171; }
+    code { font-family: monospace; font-size: .85em; color: var(--accent2); }
+
+    /* ── QUICK START ──────────────────────────── */
+    .code-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem 1.5rem;
+      font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+      font-size: .85rem; line-height: 2; overflow-x: auto;
+    }
+    .code-block .comment { color: var(--muted); }
+    .code-block .cmd     { color: var(--accent2); }
+    .code-block .dollar  { color: var(--accent); user-select: none; }
+
+    /* ── HEALTH BADGE ─────────────────────────── */
+    .health-row {
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.5rem;
+    }
+    .health-indicator { display: flex; align-items: center; gap: .5rem; font-size: .875rem; }
+    .pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
+      50%      { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+    }
+
+    /* ── FOOTER ───────────────────────────────── */
+    footer {
+      text-align: center; padding: 3rem 1.5rem;
+      border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* ── DIVIDER ──────────────────────────────── */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      h1 { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">Identity <span>Capsule OS</span></div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#quickstart">Quick Start</a></li>
+    <li><a href="https://github.com/FTHTrading/Vs-Identity-os" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+  <a class="nav-btn" href="https://github.com/FTHTrading/Vs-Identity-os" target="_blank" rel="noopener">View Repo →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">
+    <span class="badge-dot"></span>
+    v1.0 · Next.js 14 · PostgreSQL · ECDSA P-256
+  </div>
+  <h1>
+    Cryptographic Identity<br>
+    <span class="grad">Without Compromise</span>
+  </h1>
+  <p class="hero-sub">
+    Multi-tenant identity platform. Every profile is signed with ECDSA P-256,
+    shareable via NFC tap or QR code, protected by role-based access control
+    and JWT edge middleware.
+  </p>
+  <div class="hero-actions">
+    <a class="btn-primary"   href="https://github.com/FTHTrading/Vs-Identity-os" target="_blank" rel="noopener">Get Started</a>
+    <a class="btn-secondary" href="https://github.com/FTHTrading/Vs-Identity-os#-quick-start" target="_blank" rel="noopener">Read the Docs</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-value">17</div><div class="stat-label">API Routes</div></div>
+  <div class="stat"><div class="stat-value">6</div><div class="stat-label">Prisma Models</div></div>
+  <div class="stat"><div class="stat-value">4</div><div class="stat-label">RBAC Roles</div></div>
+  <div class="stat"><div class="stat-value">3</div><div class="stat-label">NFC Modes</div></div>
+  <div class="stat"><div class="stat-value">P-256</div><div class="stat-label">ECDSA Curve</div></div>
+  <div class="stat"><div class="stat-value">0</div><div class="stat-label">OpenSSL required</div></div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <h2>Everything you need to ship identity</h2>
+  <p class="section-sub">Production-ready features, built-in from day one.</p>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">🔐</div>
+      <h3>ECDSA P-256 Signing</h3>
+      <p>Every identity packet is cryptographically signed before leaving the server. Verify offline with just the public key.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📡</div>
+      <h3>NFC Tap Sharing</h3>
+      <p>Three modes: URL (browser), VCARD (contacts app), IDENTITY_PACKET (app-to-app signed JSON). Zero friction.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🏢</div>
+      <h3>Multi-Tenant RBAC</h3>
+      <p>Tenant isolation with four roles: SUPER_ADMIN, ADMIN, MEMBER, VIEWER. Per-tenant API keys with scoped permissions.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>JWT Edge Middleware</h3>
+      <p>Token validation runs at the CDN edge before your app code. Built-in rate limiting per IP with configurable windows.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📱</div>
+      <h3>QR Code + vCard</h3>
+      <p>Generate QR PNG or download a vCard 3.0 from any profile. Works with every contacts app on every platform.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🩺</div>
+      <h3>Health Check API</h3>
+      <p><code>GET /api/health</code> returns DB latency, env validation status, and uptime. Returns 200 / 207 / 503.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🐳</div>
+      <h3>Docker + Compose</h3>
+      <p>One-command local stack with Postgres. GHCR image auto-built and Trivy-scanned on every push to main.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🚀</div>
+      <h3>Netlify Deploy</h3>
+      <p>One-command deploy via <code>pnpm setup:netlify</code>. Env vars synced automatically. Preview deploys on every PR.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎛️</div>
+      <h3>Admin Dashboard</h3>
+      <p>User management, platform statistics, and full audit log — all protected behind the ADMIN role gate.</p>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- STACK -->
+<section id="stack">
+  <h2>Technology Stack</h2>
+  <p class="section-sub">Modern, well-supported, production-proven.</p>
+  <div class="stack-grid">
+    <span class="tag accent">Next.js 14</span>
+    <span class="tag accent">TypeScript 5.4</span>
+    <span class="tag accent">App Router</span>
+    <span class="tag cyan">PostgreSQL 16</span>
+    <span class="tag cyan">Prisma 5</span>
+    <span class="tag green">ECDSA P-256</span>
+    <span class="tag green">Node.js crypto</span>
+    <span class="tag green">JWT / jose</span>
+    <span class="tag orange">Docker</span>
+    <span class="tag orange">GitHub Actions</span>
+    <span class="tag orange">Netlify</span>
+    <span class="tag orange">Trivy</span>
+    <span class="tag">Tailwind CSS</span>
+    <span class="tag">Framer Motion</span>
+    <span class="tag">Zod</span>
+    <span class="tag">pnpm 9</span>
+    <span class="tag">Husky</span>
+    <span class="tag">lint-staged</span>
+  </div>
+</section>
+
+<hr>
+
+<!-- API ROUTES -->
+<section id="api">
+  <h2>API Reference</h2>
+  <p class="section-sub">17 routes. Edge-validated. Rate-limited.</p>
+  <table class="route-table">
+    <thead>
+      <tr>
+        <th>Endpoint</th>
+        <th>Method</th>
+        <th>Auth</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/api/auth/register</code></td><td><span class="method post">POST</span></td><td>—</td><td>Create account</td></tr>
+      <tr><td><code>/api/auth/login</code></td><td><span class="method post">POST</span></td><td>—</td><td>Login → JWT cookie</td></tr>
+      <tr><td><code>/api/auth/refresh</code></td><td><span class="method post">POST</span></td><td>—</td><td>Refresh access token</td></tr>
+      <tr><td><code>/api/auth/logout</code></td><td><span class="method post">POST</span></td><td>✅</td><td>Clear JWT cookie</td></tr>
+      <tr><td><code>/api/auth/me</code></td><td><span class="method get">GET</span></td><td>✅</td><td>Current user info</td></tr>
+      <tr><td><code>/api/profile</code></td><td><span class="method get">GET</span> / <span class="method post">POST</span></td><td>✅</td><td>List / create profiles</td></tr>
+      <tr><td><code>/api/profile/[slug]</code></td><td><span class="method get">GET</span> / <span class="method patch">PATCH</span> / <span class="method delete">DELETE</span></td><td>Optional</td><td>Read / update / delete profile</td></tr>
+      <tr><td><code>/api/profile/[slug]/sign</code></td><td><span class="method post">POST</span></td><td>✅</td><td>ECDSA-sign identity packet</td></tr>
+      <tr><td><code>/api/profile/[slug]/nfc</code></td><td><span class="method get">GET</span></td><td>✅</td><td>Generate NFC NDEF payload</td></tr>
+      <tr><td><code>/api/profile/[slug]/qr</code></td><td><span class="method get">GET</span></td><td>✅</td><td>Generate QR PNG</td></tr>
+      <tr><td><code>/api/profile/[slug]/identity-packet</code></td><td><span class="method get">GET</span></td><td>✅</td><td>Signed identity JSON</td></tr>
+      <tr><td><code>/api/vcard/[slug]</code></td><td><span class="method get">GET</span></td><td>—</td><td>Download vCard 3.0</td></tr>
+      <tr><td><code>/api/admin/users</code></td><td><span class="method get">GET</span> / <span class="method patch">PATCH</span></td><td>Admin</td><td>User management</td></tr>
+      <tr><td><code>/api/admin/stats</code></td><td><span class="method get">GET</span></td><td>Admin</td><td>Platform statistics</td></tr>
+      <tr><td><code>/api/admin/activity-log</code></td><td><span class="method get">GET</span></td><td>Admin</td><td>Audit log</td></tr>
+      <tr><td><code>/api/health</code></td><td><span class="method get">GET</span></td><td>—</td><td>DB latency + env check (200/207/503)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr>
+
+<!-- QUICK START -->
+<section id="quickstart">
+  <h2>Quick Start</h2>
+  <p class="section-sub">Running locally in 3 commands. No OpenSSL required.</p>
+  <div class="code-block">
+    <div><span class="comment"># 1. Clone &amp; install</span></div>
+    <div><span class="dollar">$ </span><span class="cmd">git clone https://github.com/FTHTrading/Vs-Identity-os.git &amp;&amp; cd Vs-Identity-os</span></div>
+    <div><span class="dollar">$ </span><span class="cmd">pnpm install</span></div>
+    <div>&nbsp;</div>
+    <div><span class="comment"># 2. Auto-generate .env (ECDSA keys + JWT secrets, no openssl)</span></div>
+    <div><span class="dollar">$ </span><span class="cmd">pnpm setup</span></div>
+    <div>&nbsp;</div>
+    <div><span class="comment"># 3. Start Postgres + run migrations + launch dev server</span></div>
+    <div><span class="dollar">$ </span><span class="cmd">docker compose up -d postgres</span></div>
+    <div><span class="dollar">$ </span><span class="cmd">pnpm db:migrate &amp;&amp; pnpm db:seed &amp;&amp; pnpm dev</span></div>
+    <div>&nbsp;</div>
+    <div><span class="comment"># Optional: one-command deploy to Netlify</span></div>
+    <div><span class="dollar">$ </span><span class="cmd">pnpm setup:netlify</span></div>
+  </div>
+
+  <br>
+
+  <div class="health-row">
+    <div class="health-indicator">
+      <div class="pulse"></div>
+      <strong>Health endpoint</strong>
+    </div>
+    <code>GET /api/health</code>
+    <span style="color:var(--muted);font-size:.85rem">→ JSON with DB latency, env status, uptime</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    Built by <a href="https://github.com/FTHTrading" target="_blank" rel="noopener">FTHTrading</a> ·
+    <a href="https://github.com/FTHTrading/Vs-Identity-os" target="_blank" rel="noopener">GitHub</a> ·
+    <a href="https://github.com/FTHTrading/Vs-Identity-os/actions" target="_blank" rel="noopener">CI/CD</a> ·
+    <a href="https://github.com/FTHTrading/Vs-Identity-os/releases" target="_blank" rel="noopener">Releases</a> ·
+    <a href="https://github.com/FTHTrading/Vs-Identity-os/pkgs/container/identity-capsule-os" target="_blank" rel="noopener">Docker</a>
+  </p>
+  <p style="margin-top:.5rem; font-size:.75rem;">
+    MIT License · Identity Capsule OS v1.0
+  </p>
+</footer>
+
+</body>
+</html>
