@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { checkRateLimit, rateLimitHeaders } from './lib/rate-limit';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -48,6 +49,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protected routes require valid JWT
+  const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? 'unknown';
+  
+  // Apply rate limiting for API routes first
+  if (pathname.startsWith('/api/')) {
+    const rateLimit = checkRateLimit(ip, 'api');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many requests', code: 'RATE_LIMIT_EXCEEDED' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      );
+    }
+  }
+
   const token =
     request.cookies.get('icos_access')?.value ??
     request.headers.get('authorization')?.replace('Bearer ', '');
@@ -75,9 +89,11 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set('x-user-role', payload.role as string);
 
     // Admin-only routes
+    let allowedAdmin = true;
     if (pathname.startsWith('/dashboard/admin') || pathname.startsWith('/api/admin')) {
       const role = payload.role as string;
       if (!['SUPER_ADMIN', 'TENANT_ADMIN', 'EDITOR'].includes(role)) {
+        allowedAdmin = false;
         if (pathname.startsWith('/api/')) {
           return NextResponse.json(
             { success: false, error: 'Insufficient permissions', code: 'FORBIDDEN' },
@@ -88,7 +104,16 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    
+    // Add rate limit headers to successful API responses
+    if (pathname.startsWith('/api/')) {
+       const rateLimit = checkRateLimit(ip, 'api');
+       const headers = rateLimitHeaders(rateLimit);
+       Object.entries(headers).forEach(([k, v]) => response.headers.set(k, v as string));
+    }
+    
+    return response;
   } catch {
     // Token invalid or expired
     if (pathname.startsWith('/api/')) {
