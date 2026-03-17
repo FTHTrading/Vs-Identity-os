@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1] — 2026-03-17
+
+### Bug Fixes
+
+- fix/feat: resolve prisma type error and implement upstash edge rate-limiting ([31d3164](https://github.com/FTHTrading/Vs-Identity-os/commit/31d31649db49854684da641ea66727602ba01c97))
+
+### Documentation
+
+- docs: add GitHub Pages landing page (docs/index.html) ([62a3446](https://github.com/FTHTrading/Vs-Identity-os/commit/62a344606d9ff56f6235efcfe4bcbf3ecbeca838))
+
+
+
 ## [1.1.0] — 2026-03-02
 
 ### Features
@@ -11,4 +23,3 @@
 ### Maintenance
 
 - chore: add @netlify/plugin-nextjs ([8cc7389](https://github.com/FTHTrading/Vs-Identity-os/commit/8cc73898340357da9e6d09193f2b55950acc18d1))
-
